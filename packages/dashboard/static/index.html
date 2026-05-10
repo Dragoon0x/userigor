@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>userigor · console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0d0a;
+    --bg-2:#13140f;
+    --grid:rgba(255,176,0,0.06);
+    --ink:#e8e2cf;
+    --ink-2:#a6a08c;
+    --ink-3:#67624f;
+    --rule:#26241c;
+    --signal:#FFB000;
+    --signal-2:#ff8a00;
+    --pos:#a3d977;
+    --neg:#e26e6e;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+    --serif:'Fraunces',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-position: -1px -1px;
+    min-height:100vh;
+  }
+  a{color:var(--signal);text-decoration:none}
+  a:hover{text-decoration:underline}
+  button{font-family:inherit;font-size:inherit;cursor:pointer}
+
+  .frame{max-width:1280px;margin:0 auto;padding:24px 32px 80px}
+
+  /* header */
+  header.console-head{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--rule);
+    padding-bottom:14px;margin-bottom:28px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--signal);box-shadow:0 0 12px var(--signal)}
+  .brand .name{font-family:var(--serif);font-style:italic;font-weight:500;font-size:24px;letter-spacing:-0.02em}
+  .brand .ver{color:var(--ink-3);font-size:11px;letter-spacing:.18em;text-transform:uppercase;margin-left:4px}
+  .stamp{color:var(--ink-3);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .stamp b{color:var(--ink-2);font-weight:500}
+
+  /* tabs */
+  nav.tabs{display:flex;gap:24px;margin-bottom:24px;border-bottom:1px solid var(--rule)}
+  nav.tabs button{
+    background:none;border:none;color:var(--ink-3);
+    padding:10px 0;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    border-bottom:1px solid transparent;
+  }
+  nav.tabs button.on{color:var(--signal);border-bottom-color:var(--signal)}
+  nav.tabs button:hover{color:var(--ink)}
+
+  /* metric grid */
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule)}
+  .metric{
+    background:var(--bg-2);padding:18px 20px;
+    display:flex;flex-direction:column;gap:8px;
+    position:relative;
+  }
+  .metric .label{color:var(--ink-3);font-size:10px;letter-spacing:.18em;text-transform:uppercase}
+  .metric .value{font-family:var(--serif);font-weight:400;font-size:36px;line-height:1;letter-spacing:-0.02em}
+  .metric .value .unit{color:var(--ink-3);font-size:14px;font-family:var(--mono);margin-left:4px}
+  .metric .meta{color:var(--ink-3);font-size:11px}
+  .metric.headline .value{color:var(--signal)}
+  .metric.headline::before{
+    content:'';position:absolute;top:0;left:0;width:24px;height:1px;background:var(--signal)
+  }
+  .metric .spark{height:32px;margin-top:auto}
+
+  /* sections */
+  section{margin-top:44px}
+  section h2{
+    font-family:var(--serif);font-style:italic;font-weight:500;font-size:24px;
+    margin:0 0 4px;letter-spacing:-0.01em;
+  }
+  section .sub{color:var(--ink-3);font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:20px}
+
+  /* table */
+  table.console{
+    width:100%;border-collapse:collapse;background:var(--bg-2);
+    border:1px solid var(--rule);
+  }
+  table.console th, table.console td{
+    text-align:left;padding:11px 14px;border-bottom:1px solid var(--rule);
+    font-size:12.5px;
+  }
+  table.console th{
+    color:var(--ink-3);font-weight:500;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    background:var(--bg);
+  }
+  table.console tr:last-child td{border-bottom:none}
+  table.console tr.row-clickable{cursor:pointer}
+  table.console tr.row-clickable:hover{background:rgba(255,176,0,.04)}
+  .pname{color:var(--signal);font-weight:500}
+  .pos{color:var(--pos)}
+  .neg{color:var(--neg)}
+  .pill{display:inline-block;padding:1px 8px;border-radius:2px;font-size:10px;letter-spacing:.12em;text-transform:uppercase}
+  .pill.active{background:rgba(163,217,119,.12);color:var(--pos)}
+  .pill.candidate{background:rgba(255,176,0,.12);color:var(--signal)}
+  .pill.retired{background:rgba(103,98,79,.18);color:var(--ink-3)}
+
+  /* time series chart */
+  .ts-wrap{
+    background:var(--bg-2);border:1px solid var(--rule);padding:20px;
+  }
+  .ts-controls{display:flex;gap:18px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .ts-controls label{color:var(--ink-3);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+  .ts-controls select{
+    background:var(--bg);color:var(--ink);border:1px solid var(--rule);
+    padding:6px 10px;font-family:var(--mono);font-size:12px;
+  }
+  .ts-svg{width:100%;height:240px;display:block}
+  .ts-axis{stroke:var(--rule);stroke-width:1}
+  .ts-grid{stroke:var(--rule);stroke-width:1;stroke-dasharray:1 4}
+  .ts-line{fill:none;stroke:var(--signal);stroke-width:1.5}
+  .ts-area{fill:url(#ts-fill)}
+  .ts-tick{fill:var(--ink-3);font-size:9px;font-family:var(--mono);letter-spacing:.08em}
+  .ts-empty{display:flex;align-items:center;justify-content:center;height:240px;color:var(--ink-3);font-size:12px}
+
+  /* pattern detail */
+  .pdetail{
+    background:var(--bg-2);border:1px solid var(--rule);padding:24px;margin-top:16px;
+    display:none;
+  }
+  .pdetail.show{display:block}
+  .pdetail h3{font-family:var(--serif);font-style:italic;font-weight:500;font-size:22px;margin:0 0 16px;color:var(--signal);letter-spacing:-0.01em}
+  .pdetail .row{display:grid;grid-template-columns:140px 1fr;gap:14px;padding:7px 0;border-bottom:1px dashed var(--rule);font-size:12.5px}
+  .pdetail .row:last-of-type{border-bottom:none}
+  .pdetail .key{color:var(--ink-3);font-size:10px;letter-spacing:.16em;text-transform:uppercase}
+  .pdetail .desc-block{margin-top:18px;padding:14px 16px;background:var(--bg);border-left:2px solid var(--signal);font-size:12px;color:var(--ink-2);white-space:pre-wrap}
+  .pdetail .causal{margin-top:18px}
+  .pdetail .causal h4{margin:0 0 10px;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);font-weight:500}
+
+  /* states */
+  .empty{color:var(--ink-3);text-align:center;padding:36px 16px;font-size:12px}
+  .empty code{background:var(--bg-2);padding:2px 6px;border:1px solid var(--rule);color:var(--signal)}
+  .err{color:var(--neg);padding:14px;border:1px solid var(--neg);background:rgba(226,110,110,.06);font-size:12px}
+
+  /* footer */
+  footer.console-foot{
+    margin-top:60px;padding-top:18px;border-top:1px solid var(--rule);
+    display:flex;justify-content:space-between;color:var(--ink-3);font-size:10px;
+    letter-spacing:.16em;text-transform:uppercase;
+  }
+
+  /* ticks bar */
+  .ticks{display:flex;gap:2px;margin-top:6px;height:6px;align-items:flex-end}
+  .ticks span{flex:1;background:var(--rule);min-height:1px;border-radius:1px}
+  .ticks span.f{background:var(--signal);box-shadow:0 0 6px rgba(255,176,0,.4)}
+
+  /* tab content */
+  .pane{display:none}
+  .pane.on{display:block}
+
+  /* small responsive */
+  @media (max-width:720px){
+    .frame{padding:16px}
+    header.console-head{flex-direction:column;align-items:flex-start;gap:8px}
+    .pdetail .row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="frame">
+
+  <header class="console-head">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="name">userigor</span>
+      <span class="ver">v1.0 · console</span>
+    </div>
+    <div class="stamp" id="stamp">
+      <span id="stamp-status">connecting…</span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button data-tab="overview" class="on">Overview</button>
+    <button data-tab="patterns">Patterns</button>
+    <button data-tab="series">Time Series</button>
+    <button data-tab="status">Status</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <div id="pane-overview" class="pane on">
+    <section style="margin-top:0">
+      <h2>Telemetry</h2>
+      <div class="sub">last <span id="window-days">30</span> days · n=<span id="window-n">—</span></div>
+      <div class="metric-grid" id="metric-grid">
+        <!-- filled by JS -->
+      </div>
+    </section>
+  </div>
+
+  <!-- PATTERNS -->
+  <div id="pane-patterns" class="pane">
+    <section style="margin-top:0">
+      <h2>Patterns</h2>
+      <div class="sub">click a row for causal detail</div>
+      <div id="patterns-table-wrap"></div>
+      <div class="pdetail" id="pdetail"></div>
+    </section>
+  </div>
+
+  <!-- SERIES -->
+  <div id="pane-series" class="pane">
+    <section style="margin-top:0">
+      <h2>Time Series</h2>
+      <div class="sub">daily buckets</div>
+      <div class="ts-wrap">
+        <div class="ts-controls">
+          <label for="ts-metric">Metric</label>
+          <select id="ts-metric">
+            <option value="first_try_acceptance" selected>first_try_acceptance</option>
+            <option value="edit_after_accept">edit_after_accept</option>
+            <option value="revert_rate">revert_rate</option>
+            <option value="correction_velocity">correction_velocity</option>
+            <option value="drift_distance">drift_distance</option>
+            <option value="pattern_coverage">pattern_coverage</option>
+          </select>
+          <label for="ts-days">Window</label>
+          <select id="ts-days">
+            <option value="7">7d</option>
+            <option value="14" selected>14d</option>
+            <option value="30">30d</option>
+            <option value="90">90d</option>
+          </select>
+        </div>
+        <div id="ts-host"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- STATUS -->
+  <div id="pane-status" class="pane">
+    <section style="margin-top:0">
+      <h2>Status</h2>
+      <div class="sub">runtime configuration</div>
+      <table class="console" id="status-table"><tbody></tbody></table>
+    </section>
+  </div>
+
+  <footer class="console-foot">
+    <span>userigor · MIT · Dragoon0x</span>
+    <span id="poll">poll · 30s</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const fmt = {
+    pct: v => (v*100).toFixed(1) + '%',
+    n1:  v => Number(v).toFixed(1),
+    n2:  v => Number(v).toFixed(2),
+    int: v => String(Math.round(v)),
+    sec: v => Math.round(v) + 's',
+    sign: v => (v >= 0 ? '+' : '') + v.toFixed(3),
+    pctSign: v => (v >= 0 ? '+' : '') + (v*100).toFixed(1) + '%'
+  };
+
+  async function api(path) {
+    const res = await fetch(path, { headers:{'cache-control':'no-cache'} });
+    if (!res.ok) throw new Error(path + ' → ' + res.status);
+    return res.json();
+  }
+
+  function ticks(value, max=1, n=24){
+    const cells = [];
+    if (max <= 0) max = 1;
+    const filled = Math.max(0, Math.min(n, Math.round((value/max)*n)));
+    for (let i=0;i<n;i++){
+      const span = document.createElement('span');
+      if (i < filled) span.className = 'f';
+      cells.push(span);
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'ticks';
+    cells.forEach(c => wrap.appendChild(c));
+    return wrap;
+  }
+
+  function metricCard({label, value, unit, meta, headline, bar}) {
+    const div = document.createElement('div');
+    div.className = 'metric' + (headline ? ' headline' : '');
+    div.innerHTML = `
+      <div class="label">${label}</div>
+      <div class="value">${value}${unit ? `<span class="unit">${unit}</span>` : ''}</div>
+      <div class="meta">${meta || ''}</div>
+    `;
+    if (bar) div.appendChild(bar);
+    return div;
+  }
+
+  function emptyState(msg, hint){
+    const d = document.createElement('div');
+    d.className = 'empty';
+    d.innerHTML = `<div>${msg}</div>${hint ? `<div style="margin-top:6px">${hint}</div>` : ''}`;
+    return d;
+  }
+
+  // ---- OVERVIEW ----
+  async function renderOverview(){
+    const days = parseInt($('#window-days').textContent || '30', 10);
+    const since = Date.now() - days * 24*60*60*1000;
+    let snap;
+    try {
+      snap = await api(`/api/metrics?since=${since}`);
+    } catch (e) {
+      $('#metric-grid').innerHTML = '';
+      $('#metric-grid').appendChild(emptyState('failed to load metrics', String(e.message)));
+      return;
+    }
+    $('#window-n').textContent = snap.sample_size;
+    const grid = $('#metric-grid');
+    grid.innerHTML = '';
+    if (snap.sample_size === 0) {
+      grid.appendChild(emptyState(
+        'no corrections yet',
+        'run <code>rigor backfill</code> in a repo to seed the loop'
+      ));
+      return;
+    }
+    grid.appendChild(metricCard({
+      headline: true,
+      label: 'First-Try Acceptance',
+      value: fmt.pct(snap.first_try_acceptance),
+      meta: 'higher is better',
+      bar: ticks(snap.first_try_acceptance, 1, 28)
+    }));
+    grid.appendChild(metricCard({
+      label: 'Edit After Accept',
+      value: fmt.n1(snap.edit_after_accept),
+      unit: 'lines',
+      meta: 'avg lines edited post-accept'
+    }));
+    grid.appendChild(metricCard({
+      label: 'Revert Rate',
+      value: fmt.pct(snap.revert_rate),
+      meta: 'within 7-day window',
+      bar: ticks(snap.revert_rate, 1, 28)
+    }));
+    grid.appendChild(metricCard({
+      label: 'Correction Velocity',
+      value: fmt.int(snap.correction_velocity),
+      unit: 's',
+      meta: 'median emit→commit'
+    }));
+    grid.appendChild(metricCard({
+      label: 'Drift Distance',
+      value: fmt.n1(snap.drift_distance),
+      unit: 'lines',
+      meta: 'avg correction size'
+    }));
+    grid.appendChild(metricCard({
+      label: 'Pattern Coverage',
+      value: fmt.pct(snap.pattern_coverage),
+      meta: 'in known cluster',
+      bar: ticks(snap.pattern_coverage, 1, 28)
+    }));
+  }
+
+  // ---- PATTERNS ----
+  async function renderPatterns(){
+    const wrap = $('#patterns-table-wrap');
+    wrap.innerHTML = '';
+    let patterns;
+    try {
+      patterns = await api('/api/patterns?status=all&limit=200');
+    } catch (e) {
+      wrap.appendChild(emptyState('failed to load patterns', String(e.message)));
+      return;
+    }
+    if (!patterns.length) {
+      wrap.appendChild(emptyState(
+        'no patterns yet',
+        'capture corrections, then run <code>rigor cluster</code>'
+      ));
+      return;
+    }
+    const tbl = document.createElement('table');
+    tbl.className = 'console';
+    tbl.innerHTML = `
+      <thead><tr>
+        <th>Name</th><th>Size</th><th>Density</th><th>Inj</th>
+        <th>Impact</th><th>Status</th><th>Languages</th>
+      </tr></thead>
+      <tbody></tbody>`;
+    const tb = tbl.querySelector('tbody');
+    for (const p of patterns) {
+      const tr = document.createElement('tr');
+      tr.className = 'row-clickable';
+      tr.dataset.id = p.id;
+      const impactCls = p.impact_score >= 0 ? 'pos' : 'neg';
+      tr.innerHTML = `
+        <td class="pname">${escapeHtml(p.name)}</td>
+        <td>${p.size}</td>
+        <td>${p.density.toFixed(2)}</td>
+        <td>${p.injection_count}</td>
+        <td class="${impactCls}">${fmt.sign(p.impact_score)}</td>
+        <td><span class="pill ${p.status}">${p.status}</span></td>
+        <td>${p.languages.join(', ')}</td>
+      `;
+      tr.addEventListener('click', () => showPatternDetail(p.id));
+      tb.appendChild(tr);
+    }
+    wrap.appendChild(tbl);
+  }
+
+  async function showPatternDetail(id){
+    const host = $('#pdetail');
+    host.classList.add('show');
+    host.innerHTML = `<div class="empty">loading…</div>`;
+    let detail;
+    try {
+      detail = await api(`/api/patterns/${encodeURIComponent(id)}`);
+    } catch (e) {
+      host.innerHTML = `<div class="err">${escapeHtml(String(e.message))}</div>`;
+      return;
+    }
+    const p = detail.pattern;
+    const c = detail.causal_evidence;
+    let causalHtml = '';
+    if (c) {
+      const deltaCls = c.delta >= 0 ? 'pos' : 'neg';
+      causalHtml = `
+        <div class="causal">
+          <h4>causal evidence</h4>
+          <div class="row"><div class="key">FTA with injection</div><div>${fmt.pct(c.with_injection_fta)} <span style="color:var(--ink-3)">· n=${c.sample_with}</span></div></div>
+          <div class="row"><div class="key">FTA without</div><div>${fmt.pct(c.without_injection_fta)} <span style="color:var(--ink-3)">· n=${c.sample_without}</span></div></div>
+          <div class="row"><div class="key">delta</div><div class="${deltaCls}">${fmt.pctSign(c.delta)}</div></div>
+        </div>`;
+    } else {
+      causalHtml = `<div class="causal"><h4>causal evidence</h4><div style="color:var(--ink-3);font-size:12px">needs ≥5 injections to compute · current: ${p.injection_count}</div></div>`;
+    }
+    host.innerHTML = `
+      <h3>${escapeHtml(p.name)}</h3>
+      <div class="row"><div class="key">id</div><div style="color:var(--ink-3)">${escapeHtml(p.id)}</div></div>
+      <div class="row"><div class="key">status</div><div><span class="pill ${p.status}">${p.status}</span></div></div>
+      <div class="row"><div class="key">size</div><div>${p.size}</div></div>
+      <div class="row"><div class="key">density</div><div>${p.density.toFixed(2)}</div></div>
+      <div class="row"><div class="key">injections</div><div>${p.injection_count}</div></div>
+      <div class="row"><div class="key">impact</div><div class="${p.impact_score >= 0 ? 'pos' : 'neg'}">${fmt.sign(p.impact_score)}</div></div>
+      <div class="row"><div class="key">repos</div><div>${escapeHtml(p.repos.join(', '))}</div></div>
+      <div class="row"><div class="key">languages</div><div>${escapeHtml(p.languages.join(', '))}</div></div>
+      <div class="desc-block">${escapeHtml(p.description)}</div>
+      ${causalHtml}
+    `;
+  }
+
+  // ---- TIME SERIES ----
+  async function renderSeries(){
+    const metric = $('#ts-metric').value;
+    const days = parseInt($('#ts-days').value, 10);
+    const host = $('#ts-host');
+    host.innerHTML = `<div class="ts-empty">loading…</div>`;
+    let data;
+    try {
+      data = await api(`/api/series?name=${encodeURIComponent(metric)}&days=${days}`);
+    } catch (e) {
+      host.innerHTML = `<div class="err">${escapeHtml(String(e.message))}</div>`;
+      return;
+    }
+    if (!data.length) {
+      host.innerHTML = `<div class="ts-empty">no samples in window</div>`;
+      return;
+    }
+    host.innerHTML = '';
+    host.appendChild(buildLineChart(data, metric));
+  }
+
+  function buildLineChart(points, metric){
+    const w = 1100, h = 240, pad = {l:48, r:14, t:14, b:30};
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('class', 'ts-svg');
+    svg.innerHTML = `
+      <defs>
+        <linearGradient id="ts-fill" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stop-color="#FFB000" stop-opacity="0.30"/>
+          <stop offset="100%" stop-color="#FFB000" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+    `;
+
+    const xs = points.map(p => p.window_end);
+    const ys = points.map(p => p.value);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yMin = 0;
+    const yMax = Math.max(...ys, 1) * 1.1;
+    const xScale = v => pad.l + (v - xMin) / Math.max(1, xMax - xMin) * (w - pad.l - pad.r);
+    const yScale = v => h - pad.b - (v - yMin) / Math.max(1e-9, yMax - yMin) * (h - pad.t - pad.b);
+
+    // grid lines
+    for (let i=0;i<=4;i++){
+      const y = pad.t + i*(h-pad.t-pad.b)/4;
+      const yv = yMax - i*(yMax-yMin)/4;
+      svg.innerHTML += `<line class="ts-grid" x1="${pad.l}" x2="${w-pad.r}" y1="${y}" y2="${y}"/>`;
+      svg.innerHTML += `<text class="ts-tick" x="${pad.l-8}" y="${y+3}" text-anchor="end">${formatTick(yv, metric)}</text>`;
+    }
+
+    // axes
+    svg.innerHTML += `<line class="ts-axis" x1="${pad.l}" x2="${w-pad.r}" y1="${h-pad.b}" y2="${h-pad.b}"/>`;
+    svg.innerHTML += `<line class="ts-axis" x1="${pad.l}" x2="${pad.l}" y1="${pad.t}" y2="${h-pad.b}"/>`;
+
+    // x ticks (start, mid, end)
+    const xTicks = [points[0], points[Math.floor(points.length/2)], points[points.length-1]];
+    for (const t of xTicks) {
+      if (!t) continue;
+      const x = xScale(t.window_end);
+      const date = new Date(t.window_end).toISOString().slice(5,10);
+      svg.innerHTML += `<text class="ts-tick" x="${x}" y="${h-pad.b+14}" text-anchor="middle">${date}</text>`;
+    }
+
+    // path
+    const linePath = points.map((p,i) => `${i===0?'M':'L'} ${xScale(p.window_end)} ${yScale(p.value)}`).join(' ');
+    const areaPath = linePath + ` L ${xScale(points[points.length-1].window_end)} ${h-pad.b} L ${xScale(points[0].window_end)} ${h-pad.b} Z`;
+    svg.innerHTML += `<path class="ts-area" d="${areaPath}"/>`;
+    svg.innerHTML += `<path class="ts-line" d="${linePath}"/>`;
+
+    // dots
+    for (const p of points) {
+      svg.innerHTML += `<circle cx="${xScale(p.window_end)}" cy="${yScale(p.value)}" r="2.5" fill="#FFB000"/>`;
+    }
+
+    return svg;
+  }
+
+  function formatTick(v, metric){
+    if (metric === 'first_try_acceptance' || metric === 'revert_rate' || metric === 'pattern_coverage') {
+      return (v*100).toFixed(0) + '%';
+    }
+    if (metric === 'correction_velocity') return Math.round(v) + 's';
+    return v.toFixed(1);
+  }
+
+  // ---- STATUS ----
+  async function renderStatus(){
+    const tbody = $('#status-table tbody');
+    tbody.innerHTML = '';
+    let s;
+    try { s = await api('/api/status'); }
+    catch (e) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="2" class="err">${escapeHtml(String(e.message))}</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+    const rows = [
+      ['db_path', s.db_path],
+      ['agent', s.agent],
+      ['repo', s.repo],
+      ['corrections', s.corrections],
+      ['patterns total', s.patterns_total],
+      ['patterns active', s.patterns_active],
+      ['patterns candidate', s.patterns_candidate],
+      ['patterns retired', s.patterns_retired]
+    ];
+    for (const [k,v] of rows) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <th style="width:200px">${escapeHtml(k)}</th>
+        <td style="font-family:var(--mono);color:var(--ink-2)">${escapeHtml(String(v))}</td>`;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, m => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  // ---- TABS ----
+  function activate(tab){
+    $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+    $$('.pane').forEach(p => p.classList.toggle('on', p.id === `pane-${tab}`));
+    if (tab === 'overview') renderOverview();
+    if (tab === 'patterns') renderPatterns();
+    if (tab === 'series') renderSeries();
+    if (tab === 'status') renderStatus();
+  }
+  $$('.tabs button').forEach(b => b.addEventListener('click', () => activate(b.dataset.tab)));
+  $('#ts-metric').addEventListener('change', renderSeries);
+  $('#ts-days').addEventListener('change', renderSeries);
+
+  // ---- BOOT ----
+  async function boot(){
+    try {
+      const ping = await api('/api/status');
+      $('#stamp-status').innerHTML = `connected · <b>${escapeHtml(ping.repo)}</b>`;
+    } catch (e) {
+      $('#stamp-status').textContent = 'offline';
+      $('#stamp').style.color = 'var(--neg)';
+    }
+    activate('overview');
+  }
+  boot();
+
+  // poll the active tab every 30s
+  setInterval(() => {
+    const active = $$('.tabs button.on')[0]?.dataset.tab;
+    if (active) activate(active);
+  }, 30000);
+})();
+</script>
+</body>
+</html>

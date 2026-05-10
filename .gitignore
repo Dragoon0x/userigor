@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+.env.*
+coverage/
+*.tsbuildinfo
+.rigor/
+*.db
+*.db-shm
+*.db-wal
+.idea/
+.vscode/

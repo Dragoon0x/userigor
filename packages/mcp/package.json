@@ -1,0 +1,50 @@
+{
+  "name": "@userigor/mcp",
+  "version": "1.0.0",
+  "description": "MCP server for userigor. Exposes rigor_recall, rigor_capture, rigor_metrics, rigor_cluster, rigor_status as Model Context Protocol tools.",
+  "author": "Dragoon0x (https://github.com/Dragoon0x)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "rigor-mcp": "./dist/server.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "dependencies": {
+    "@userigor/core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-coding",
+    "claude-code",
+    "telemetry"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dragoon0x/userigor.git",
+    "directory": "packages/mcp"
+  }
+}

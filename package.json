@@ -1,0 +1,25 @@
+{
+  "name": "userigor-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Telemetry-driven AI coding loop. Capture corrections, cluster patterns, inject context, measure outcomes.",
+  "author": "Dragoon0x (https://github.com/Dragoon0x)",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r --filter='./packages/*' run build",
+    "test": "pnpm -r --filter='./packages/*' run test",
+    "clean": "pnpm -r exec rm -rf dist node_modules",
+    "publish:all": "pnpm -r --filter='./packages/*' publish --access public --no-git-checks"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.12.0"
+}

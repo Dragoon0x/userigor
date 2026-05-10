@@ -1,0 +1,87 @@
+{
+  "name": "@userigor/core",
+  "version": "1.0.0",
+  "description": "Core engine for userigor: capture corrections, cluster patterns, inject context, measure outcomes.",
+  "author": "Dragoon0x (https://github.com/Dragoon0x)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./capture": {
+      "types": "./dist/capture/index.d.ts",
+      "import": "./dist/capture/index.js"
+    },
+    "./store": {
+      "types": "./dist/store/index.d.ts",
+      "import": "./dist/store/index.js"
+    },
+    "./embed": {
+      "types": "./dist/embed/index.d.ts",
+      "import": "./dist/embed/index.js"
+    },
+    "./cluster": {
+      "types": "./dist/cluster/index.d.ts",
+      "import": "./dist/cluster/index.js"
+    },
+    "./metrics": {
+      "types": "./dist/metrics/index.d.ts",
+      "import": "./dist/metrics/index.js"
+    },
+    "./inject": {
+      "types": "./dist/inject/index.d.ts",
+      "import": "./dist/inject/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "keywords": [
+    "ai-coding",
+    "claude-code",
+    "cursor",
+    "codex",
+    "telemetry",
+    "mcp",
+    "embeddings",
+    "code-review",
+    "developer-tools"
+  ],
+  "dependencies": {
+    "better-sqlite3": "^11.3.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dragoon0x/userigor.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/Dragoon0x/userigor#readme",
+  "bugs": {
+    "url": "https://github.com/Dragoon0x/userigor/issues"
+  }
+}

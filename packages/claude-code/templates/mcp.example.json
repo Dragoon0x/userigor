@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "userigor": {
+      "command": "npx",
+      "args": ["-y", "@userigor/mcp"]
+    }
+  }
+}

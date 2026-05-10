@@ -1,0 +1,47 @@
+{
+  "name": "@userigor/dashboard",
+  "version": "1.0.0",
+  "description": "Local web dashboard for userigor: metrics, patterns, time-series. Reads ~/.rigor/data.db.",
+  "author": "Dragoon0x (https://github.com/Dragoon0x)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "rigor-dashboard": "./dist/server.js"
+  },
+  "files": [
+    "dist",
+    "static",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "dependencies": {
+    "@userigor/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "dashboard",
+    "ai-coding",
+    "metrics",
+    "telemetry"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dragoon0x/userigor.git",
+    "directory": "packages/dashboard"
+  }
+}
