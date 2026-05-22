@@ -1,5 +1,14 @@
 # userigor
 
+[![npm](https://img.shields.io/npm/v/@userigor/core?label=%40userigor%2Fcore&color=2b3137)](https://www.npmjs.com/package/@userigor/core)
+[![npm](https://img.shields.io/npm/v/@userigor/cli?label=%40userigor%2Fcli&color=2b3137)](https://www.npmjs.com/package/@userigor/cli)
+[![license](https://img.shields.io/badge/license-MIT-2b3137)](./LICENSE)
+[![status](https://img.shields.io/badge/status-experimental%20%C2%B7%20WIP-c89a4a)](./DISCLAIMER.md)
+[![node](https://img.shields.io/badge/node-%3E%3D20-2b3137)](#)
+
+> ⚠️ **Experimental software · WIP · DYOR.**
+> userigor is early-stage independent research tooling. It reads your local git history and writes a SQLite database under `~/.rigor/`. No security audit. No warranty. No guarantees of correctness, stability, or backward compatibility between versions. Treat it as a research artifact, not a production dependency. Read [DISCLAIMER.md](./DISCLAIMER.md) before installing on anything you care about.
+
 **Telemetry-driven AI coding loop.** Capture corrections, cluster patterns, inject context, measure outcomes.
 
 userigor instruments the gap between what your AI coding agent generates and what actually ships. Every correction becomes a measurement. Every cluster becomes a pattern. Every injection is graded by whether it actually raised first-try acceptance.
@@ -12,6 +21,24 @@ rigor metrics                     →   first_try_acceptance: 64.2%  · drift_di
 ```
 
 MIT licensed. Local-first. Agent-agnostic via MCP.
+
+→ Landing page: [dragoon0x.github.io/userigor](https://dragoon0x.github.io/userigor/)
+
+---
+
+## Quick start
+
+The CLI alone gets you the full loop. Everything else is optional.
+
+```bash
+npm install -g @userigor/cli
+rigor init
+rigor backfill --limit 200
+rigor cluster
+rigor metrics
+```
+
+That's it. The adapters below are surface-specific add-ons.
 
 ---
 
@@ -28,17 +55,12 @@ userigor takes a different stance:
 
 ---
 
-## Install
-
-Pick the surface you use. The CLI alone gets you the full loop.
+## Install — all surfaces
 
 ```bash
-# CLI only
+# CLI only (full loop)
 npm install -g @userigor/cli
 rigor init
-rigor backfill --limit 200
-rigor cluster
-rigor metrics
 
 # With Claude Code (MCP server + skill + slash commands)
 npm install -g @userigor/mcp @userigor/claude-code
@@ -82,29 +104,29 @@ Injection       one event of "patterns X were spliced into prompt Y"
 Metric          one computed value over a time window
 ```
 
-All persisted in a single SQLite database at `~/.rigor/data.db` by default. Vectors stored as Float32 BLOBs; cosine similarity computed in JS. Adequate for collections up to ~50k corrections — beyond that, swap the store for a vec-aware backend via the `Store` interface.
+All persisted in a single SQLite database at `~/.rigor/data.db` by default. Vectors stored as Float32 BLOBs; cosine similarity computed in JS. Adequate for collections up to ~50k corrections. Beyond that, swap the store for a vec-aware backend via the `Store` interface.
 
 ### Pipeline
 
 ```
-   git history          rigor backfill            Correction[]
-                  ──────────────────────────►
-                                                       │
-                                                       ▼ rigor embed
-                                                 Correction[ embedded ]
-                                                       │
-                                                       ▼ rigor cluster
-                                                    Pattern[ active ]
-                                                       │
-   user prompt    ─────► rigor inject  ─────►  prompt + <rigor:context>
-                                                       │
-   (agent runs, output is committed; new Correction captured)
-                                                       │
-                                                       ▼ rigor metrics
-                          first_try_acceptance, drift, revert, …
-                                                       │
-                                                       ▼ rigor prune
-                          patterns whose injection didn't help → retired
+git history          rigor backfill            Correction[]
+               ──────────────────────────►
+                                                    │
+                                                    ▼ rigor embed
+                                              Correction[ embedded ]
+                                                    │
+                                                    ▼ rigor cluster
+                                                 Pattern[ active ]
+                                                    │
+user prompt    ─────► rigor inject  ─────►  prompt + <rigor:context>
+                                                    │
+(agent runs, output is committed; new Correction captured)
+                                                    │
+                                                    ▼ rigor metrics
+                       first_try_acceptance, drift, revert, …
+                                                    │
+                                                    ▼ rigor prune
+                       patterns whose injection didn't help → retired
 ```
 
 ---
@@ -134,15 +156,15 @@ Every command takes `--help`. The full set of flags lives in `rigor help`.
 
 The `@userigor/mcp` server exposes seven tools over stdio for any MCP-aware client.
 
-| Tool | Purpose |
-|---|---|
-| `rigor_recall` | Top patterns for a task. Read-only. Use BEFORE generating. |
-| `rigor_capture` | Capture a correction (before, after, file, agent, task). |
-| `rigor_cluster` | Re-cluster all corrections. Idempotent. |
-| `rigor_metrics` | Current snapshot for the last N days. |
-| `rigor_patterns` | List patterns by status. |
-| `rigor_pattern_detail` | One pattern + causal evidence (FTA delta). |
-| `rigor_status` | System status: counts, db path, agent, repo. |
+| Tool                   | Purpose                                                    |
+| ---------------------- | ---------------------------------------------------------- |
+| `rigor_recall`         | Top patterns for a task. Read-only. Use BEFORE generating. |
+| `rigor_capture`        | Capture a correction (before, after, file, agent, task).   |
+| `rigor_cluster`        | Re-cluster all corrections. Idempotent.                    |
+| `rigor_metrics`        | Current snapshot for the last N days.                      |
+| `rigor_patterns`       | List patterns by status.                                   |
+| `rigor_pattern_detail` | One pattern + causal evidence (FTA delta).                 |
+| `rigor_status`         | System status: counts, db path, agent, repo.               |
 
 Register with Claude Code by adding to `~/.claude/settings.json`:
 
@@ -163,14 +185,14 @@ Register with Claude Code by adding to `~/.claude/settings.json`:
 
 These are the numbers computed by the engine. Precise definitions, not vibes.
 
-| Metric | Direction | Definition |
-|---|---|---|
-| `first_try_acceptance` | ↑ better | Fraction of AI outputs accepted with zero edits before commit. The headline number. |
-| `edit_after_accept` | ↓ better | Average lines edited after the user clicked accept but before commit. Catches "looked good, had to fix it." |
-| `revert_rate` | ↓ better | Fraction of corrections inverted by a later correction within seven days. Catches "shipped, broke later." |
-| `correction_velocity` | ↓ better | Median seconds between AI emission and final commit. Time spent correcting is time the loop is failing. |
-| `drift_distance` | ↓ better | Mean diff size of corrections in the window. Lower means the AI's output is closer to what shipped. |
-| `pattern_coverage` | ↑ better | Fraction of corrections that fall into a known cluster. Higher means the system is recognizing recurring problems. |
+| Metric                 | Direction | Definition                                                                                                         |
+| ---------------------- | --------- | ------------------------------------------------------------------------------------------------------------------ |
+| `first_try_acceptance` | ↑ better  | Fraction of AI outputs accepted with zero edits before commit. The headline number.                                |
+| `edit_after_accept`    | ↓ better  | Average lines edited after the user clicked accept but before commit. Catches "looked good, had to fix it."        |
+| `revert_rate`          | ↓ better  | Fraction of corrections inverted by a later correction within seven days. Catches "shipped, broke later."          |
+| `correction_velocity`  | ↓ better  | Median seconds between AI emission and final commit. Time spent correcting is time the loop is failing.            |
+| `drift_distance`       | ↓ better  | Mean diff size of corrections in the window. Lower means the AI's output is closer to what shipped.                |
+| `pattern_coverage`     | ↑ better  | Fraction of corrections that fall into a known cluster. Higher means the system is recognizing recurring problems. |
 
 ### Pattern impact
 
@@ -182,16 +204,16 @@ These are the numbers computed by the engine. Precise definitions, not vibes.
 
 userigor sits in a different category from manual annotation systems. The deltas are deliberate:
 
-| Axis | Manual annotation | userigor |
-|---|---|---|
-| **Capture** | User types a rule | Auto-extracted from git diffs |
-| **Search** | Keyword (FTS) | Semantic (embeddings + cosine clustering) |
-| **Injection** | Manual recall via slash command | Pre-flight, MCP-driven, scored |
-| **Storage** | Local note files | SQLite + vector BLOBs |
-| **Outcome metrics** | None — heatmaps of activity | First-try acceptance, drift, revert, velocity |
-| **Causal evidence** | None | FTA delta with vs without injection |
-| **Retirement** | Manual edit | Automatic for low-impact patterns |
-| **Agent compatibility** | Tied to one agent | Agent-agnostic via MCP, with adapters for Claude Code and Cursor |
+| Axis                    | Manual annotation               | userigor                                                         |
+| ----------------------- | ------------------------------- | ---------------------------------------------------------------- |
+| **Capture**             | User types a rule               | Auto-extracted from git diffs                                    |
+| **Search**              | Keyword (FTS)                   | Semantic (embeddings + cosine clustering)                        |
+| **Injection**           | Manual recall via slash command | Pre-flight, MCP-driven, scored                                   |
+| **Storage**             | Local note files                | SQLite + vector BLOBs                                            |
+| **Outcome metrics**     | None. Heatmaps of activity      | First-try acceptance, drift, revert, velocity                    |
+| **Causal evidence**     | None                            | FTA delta with vs without injection                              |
+| **Retirement**          | Manual edit                     | Automatic for low-impact patterns                                |
+| **Agent compatibility** | Tied to one agent               | Agent-agnostic via MCP, with adapters for Claude Code and Cursor |
 
 Both philosophies are valid. They optimize different things. userigor optimizes for measurement-first feedback loops.
 
@@ -219,8 +241,10 @@ The `EmbeddingProvider` interface is small (`embed`, `embedBatch`, `dimensions`,
 
 ```
 userigor/
-├── docs/                  GitHub Pages (landing page)
-│   └── index.html
+├── docs/                  GitHub Pages (landing page + og image)
+│   ├── index.html
+│   ├── og.png
+│   └── .nojekyll
 ├── packages/
 │   ├── core/              @userigor/core
 │   ├── cli/               @userigor/cli
@@ -228,6 +252,7 @@ userigor/
 │   ├── claude-code/       @userigor/claude-code
 │   ├── cursor/            @userigor/cursor
 │   └── dashboard/         @userigor/dashboard
+├── CHANGELOG.md
 ├── DISCLAIMER.md
 ├── LICENSE                MIT
 ├── PUBLISHING.md
@@ -242,6 +267,7 @@ userigor/
 ## Contributing
 
 All packages use:
+
 - TypeScript strict, ESM only, target node20
 - `tsup` for builds
 - `node:test` for tests (no Jest, no Vitest, no test deps)
@@ -253,9 +279,14 @@ Run `pnpm install` then `pnpm build` from the repo root. Run tests per package w
 
 ## Status
 
-v1.0.0. All six packages implemented, tested, built. See [PUBLISHING.md](./PUBLISHING.md) for npm publish procedure and [DISCLAIMER.md](./DISCLAIMER.md) for the experimental-software notice.
+`v1.0.1` · **experimental · work-in-progress**. All six packages published to npm, tested, and built, but the project is early-stage research tooling, not production-grade infrastructure. Interfaces, metric definitions, and storage schemas may change between minor versions without migration paths.
 
-GitHub: https://github.com/Dragoon0x/userigor
+See [CHANGELOG.md](./CHANGELOG.md) for release notes, [PUBLISHING.md](./PUBLISHING.md) for npm publish procedure, and [DISCLAIMER.md](./DISCLAIMER.md) for the full experimental-software notice, privacy implications, and no-warranty terms.
+
+**Use at your own risk. Do your own research. Back up anything you care about before pointing this at it.**
+
+GitHub: <https://github.com/Dragoon0x/userigor>
+npm: <https://www.npmjs.com/org/userigor>
 
 ---
 
